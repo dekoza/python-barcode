@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+updadte
+~~~~~~~
+* Fixed ISSN to accept full EAN-13 format (13 digits starting with 977) and
+  preserve digits 11-12 (sequence variant) instead of always replacing them
+  with "00".
+
 v0.16.2
 ~~~~~~~
 * Add support for Python 3.13.

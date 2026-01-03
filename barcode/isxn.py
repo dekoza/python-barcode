@@ -88,22 +88,33 @@ class InternationalStandardBookNumber10(InternationalStandardBookNumber13):
 
 class InternationalStandardSerialNumber(EuropeanArticleNumber13):
     """Initializes new ISSN barcode. This code is rendered as EAN-13
-    by prefixing it with 977 and adding 00 between code and checksum.
+    by prefixing it with 977.
+
+    The ISSN can be provided in short form (7-8 digits) or full EAN-13 form
+    (13 digits starting with 977). When provided in short form, digits 11-12
+    default to "00". When provided in full form, digits 11-12 are preserved.
 
     :parameters:
         issn : String
-            The issn number as string.
+            The issn number as string. Can be 7-8 digits (short form) or
+            13 digits starting with 977 (full EAN-13 form).
         writer : barcode.writer Instance
             The writer to render the barcode (default: SVGWriter).
     """
 
     name = "ISSN"
 
-    digits = 7
+    issn_digits = 7
 
     def __init__(self, issn, writer=None) -> None:
         issn = issn.replace("-", "")
-        issn = issn[: self.digits]
+        # Handle full EAN-13 form (13 digits starting with 977)
+        if len(issn) >= 12 and issn.startswith("977"):
+            self._sequence_digits = issn[10:12]
+            issn = issn[3:10]
+        else:
+            self._sequence_digits = "00"
+            issn = issn[: self.issn_digits]
         self.issn = issn
         self.issn = f"{issn}{self._calculate_checksum()}"
         super().__init__(self.make_ean(), writer)
@@ -120,7 +131,9 @@ class InternationalStandardSerialNumber(EuropeanArticleNumber13):
         return tmp
 
     def make_ean(self):
-        return f"977{self.issn[:7]}00{self._calculate_checksum()}"
+        # Return 12 digits: 977 + 7 ISSN digits + 2 sequence digits
+        # EAN-13 will calculate and append the 13th digit (EAN checksum)
+        return f"977{self.issn[:7]}{self._sequence_digits}"
 
     def __str__(self) -> str:
         return self.issn
