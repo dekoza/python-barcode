@@ -35,6 +35,8 @@ class EuropeanArticleNumber13(Barcode):
     :param ean: The ean number as string. If the value is too long, it is trimmed.
     :param writer: The writer to render the barcode (default: SVGWriter).
     :param no_checksum: Don't calculate the checksum. Use the provided input instead.
+    :param guardbar: If True, use guard bar markers in the output.
+    :param addon: Optional 2 or 5 digit addon (EAN-2 or EAN-5).
     """
 
     name = "EAN-13"
@@ -47,6 +49,7 @@ class EuropeanArticleNumber13(Barcode):
         writer=None,
         no_checksum: bool = False,
         guardbar: bool = False,
+        addon: str | None = None,
     ) -> None:
         if not ean[: self.digits].isdigit():
             raise IllegalCharacterError(f"EAN code can only contain numbers {ean}.")
@@ -68,6 +71,21 @@ class EuropeanArticleNumber13(Barcode):
 
         self.ean = f"{base}{last}"
 
+        # Validate and store addon
+        self.addon = None
+        if addon is not None:
+            addon = addon.strip()
+            if addon:
+                if not addon.isdigit():
+                    raise IllegalCharacterError(
+                        f"Addon can only contain numbers, got {addon}."
+                    )
+                if len(addon) not in (2, 5):
+                    raise NumberOfDigitsError(
+                        f"Addon must be 2 or 5 digits, received {len(addon)}."
+                    )
+                self.addon = addon
+
         self.guardbar = guardbar
         if guardbar:
             self.EDGE = _ean.EDGE.replace("1", "G")
@@ -78,12 +96,18 @@ class EuropeanArticleNumber13(Barcode):
         self.writer = writer or self.default_writer()
 
     def __str__(self) -> str:
+        if self.addon:
+            return f"{self.ean} {self.addon}"
         return self.ean
 
     def get_fullcode(self) -> str:
         if self.guardbar:
-            return self.ean[0] + " " + self.ean[1:7] + " " + self.ean[7:] + " >"
-        return self.ean
+            base = self.ean[0] + " " + self.ean[1:7] + " " + self.ean[7:] + " >"
+        else:
+            base = self.ean
+        if self.addon:
+            return f"{base} {self.addon}"
+        return base
 
     def calculate_checksum(self, value: str | None = None) -> int:
         """Calculates and returns the checksum for EAN13-Code.
@@ -112,7 +136,59 @@ class EuropeanArticleNumber13(Barcode):
         for number in self.ean[7:]:
             code += _ean.CODES["C"][int(number)]
         code += self.EDGE
+
+        # Add addon if present
+        if self.addon:
+            code += self._build_addon()
+
         return [code]
+
+    def _build_addon(self) -> str:
+        """Builds the addon barcode pattern (EAN-2 or EAN-5).
+
+        :returns: The addon pattern as string
+        """
+        if not self.addon:
+            return ""
+
+        if len(self.addon) == 2:
+            return self._build_addon2()
+        return self._build_addon5()
+
+    def _build_addon2(self) -> str:
+        """Builds EAN-2 addon pattern.
+
+        Parity is determined by the 2-digit value mod 4.
+        """
+        value = int(self.addon)
+        parity = _ean.ADDON2_PARITY[value % 4]
+
+        code = _ean.ADDON_START
+        for i, digit in enumerate(self.addon):
+            if i > 0:
+                code += _ean.ADDON_SEPARATOR
+            code += _ean.CODES[parity[i]][int(digit)]
+        return code
+
+    def _build_addon5(self) -> str:
+        """Builds EAN-5 addon pattern.
+
+        Parity is determined by a checksum calculation.
+        """
+        # Calculate checksum for parity pattern
+        checksum = 0
+        for i, digit in enumerate(self.addon):
+            weight = 3 if i % 2 == 0 else 9
+            checksum += int(digit) * weight
+        checksum %= 10
+        parity = _ean.ADDON5_PARITY[checksum]
+
+        code = _ean.ADDON_START
+        for i, digit in enumerate(self.addon):
+            if i > 0:
+                code += _ean.ADDON_SEPARATOR
+            code += _ean.CODES[parity[i]][int(digit)]
+        return code
 
     def to_ascii(self) -> str:
         """Returns an ascii representation of the barcode.
@@ -136,8 +212,10 @@ class EuropeanArticleNumber13WithGuard(EuropeanArticleNumber13):
 
     name = "EAN-13 with guards"
 
-    def __init__(self, ean, writer=None, no_checksum=False, guardbar=True) -> None:
-        super().__init__(ean, writer, no_checksum, guardbar)
+    def __init__(
+        self, ean, writer=None, no_checksum=False, guardbar=True, addon=None
+    ) -> None:
+        super().__init__(ean, writer, no_checksum, guardbar, addon)
 
 
 class JapanArticleNumber(EuropeanArticleNumber13):
@@ -167,6 +245,7 @@ class EuropeanArticleNumber8(EuropeanArticleNumber13):
 
     :param ean: The ean number as string.
     :param writer: The writer to render the barcode (default: SVGWriter).
+    :param addon: Optional 2 or 5 digit addon (EAN-2 or EAN-5).
     """
 
     name = "EAN-8"
@@ -185,12 +264,21 @@ class EuropeanArticleNumber8(EuropeanArticleNumber13):
         for number in self.ean[4:]:
             code += _ean.CODES["C"][int(number)]
         code += self.EDGE
+
+        # Add addon if present
+        if self.addon:
+            code += self._build_addon()
+
         return [code]
 
     def get_fullcode(self):
         if self.guardbar:
-            return "< " + self.ean[:4] + " " + self.ean[4:] + " >"
-        return self.ean
+            base = "< " + self.ean[:4] + " " + self.ean[4:] + " >"
+        else:
+            base = self.ean
+        if self.addon:
+            return f"{base} {self.addon}"
+        return base
 
 
 class EuropeanArticleNumber8WithGuard(EuropeanArticleNumber8):
@@ -204,8 +292,9 @@ class EuropeanArticleNumber8WithGuard(EuropeanArticleNumber8):
         writer=None,
         no_checksum: bool = False,
         guardbar: bool = True,
+        addon: str | None = None,
     ) -> None:
-        super().__init__(ean, writer, no_checksum, guardbar)
+        super().__init__(ean, writer, no_checksum, guardbar, addon)
 
 
 class EuropeanArticleNumber14(EuropeanArticleNumber13):

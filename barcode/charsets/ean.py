@@ -52,3 +52,30 @@ LEFT_PATTERN = (
     "ABABBA",
     "ABBABA",
 )
+
+# EAN-2/EAN-5 Addon patterns (GS1/ISO standard)
+ADDON_START = "1011"  # Start guard for addon
+ADDON_SEPARATOR = "01"  # Separator between addon digits
+
+# EAN-2 parity patterns: determined by value mod 4
+ADDON2_PARITY = (
+    "AA",  # 0
+    "AB",  # 1
+    "BA",  # 2
+    "BB",  # 3
+)
+
+# EAN-5 parity patterns: determined by checksum
+ADDON5_PARITY = (
+    "BBAAA",  # 0
+    "BABAA",  # 1
+    "BAABA",  # 2
+    "BAAAB",  # 3
+    "ABBAA",  # 4
+    "AABBA",  # 5
+    "AAABB",  # 6
+    "ABABA",  # 7
+    "ABAAB",  # 8
+    "AABAB",  # 9
+)
+
