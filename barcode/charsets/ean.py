@@ -6,8 +6,8 @@ from barcode.charsets.addons import ADDON_QUIET_ZONE
 from barcode.charsets.addons import ADDON_SEPARATOR
 from barcode.charsets.addons import ADDON_START
 
-# Note: Addon codes use CODES["A"] and CODES["B"] defined below
-
+# Note: Addon codes are defined in barcode.charsets.addons, but they use the
+# same A/B digit encodings as CODES["A"] and CODES["B"] defined below.
 EDGE = "101"
 MIDDLE = "01010"
 CODES = {
