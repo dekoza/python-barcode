@@ -146,14 +146,20 @@ class EuropeanArticleNumber13(Barcode):
     def _build_addon(self) -> str:
         """Builds the addon barcode pattern (EAN-2 or EAN-5).
 
-        :returns: The addon pattern as string
+        :returns: The addon pattern as string (including quiet zone separator)
         """
         if not self.addon:
             return ""
 
+        # Add quiet zone (9 modules) before addon per GS1 specification
+        code = _ean.ADDON_QUIET_ZONE
+
         if len(self.addon) == 2:
-            return self._build_addon2()
-        return self._build_addon5()
+            code += self._build_addon2()
+        else:
+            code += self._build_addon5()
+
+        return code
 
     def _build_addon2(self) -> str:
         """Builds EAN-2 addon pattern.

@@ -7,6 +7,7 @@ Based on GS1/ISO standard.
 from __future__ import annotations
 
 # Addon guard patterns
+ADDON_QUIET_ZONE = "000000000"  # 9-module separator between main code and addon (GS1 spec)
 ADDON_START = "1011"  # Start guard for addon
 ADDON_SEPARATOR = "01"  # Separator between addon digits
 

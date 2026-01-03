@@ -9,6 +9,10 @@ current
   book prices.
 * Added support for EAN-2 and EAN-5 addons to UPC-A barcodes via the ``addon``
   parameter, following the same interface as EAN-13.
+* Addon rendering includes a 9-module quiet zone separator between the
+  main barcode and the addon, as required by the GS1 specification. This ensures
+  proper scanning of barcodes with addons.
+* Added scannability tests for EAN-2 and EAN-5 addons using the ``pyzbar`` library.
 * Fixed ISSN to accept full EAN-13 format (13 digits starting with 977) and
   preserve digits 11-12 (sequence variant) instead of always replacing them
   with "00".
