@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from functools import reduce
 
+from barcode import addon_utils
 from barcode.base import Barcode
 from barcode.charsets import upc as _upc
 from barcode.errors import IllegalCharacterError
@@ -130,53 +131,7 @@ class UniversalProductCodeA(Barcode):
 
         :returns: The addon pattern as string (including quiet zone separator)
         """
-        if not self.addon:
-            return ""
-
-        # Add quiet zone (9 modules) before addon per GS1 specification
-        code = _upc.ADDON_QUIET_ZONE
-
-        if len(self.addon) == 2:
-            code += self._build_addon2()
-        else:
-            code += self._build_addon5()
-
-        return code
-
-    def _build_addon2(self) -> str:
-        """Builds EAN-2 addon pattern.
-
-        Parity is determined by the 2-digit value mod 4.
-        """
-        value = int(self.addon)
-        parity = _upc.ADDON2_PARITY[value % 4]
-
-        code = _upc.ADDON_START
-        for i, digit in enumerate(self.addon):
-            if i > 0:
-                code += _upc.ADDON_SEPARATOR
-            code += _upc.ADDON_CODES[parity[i]][int(digit)]
-        return code
-
-    def _build_addon5(self) -> str:
-        """Builds EAN-5 addon pattern.
-
-        Parity is determined by a checksum calculation.
-        """
-        # Calculate checksum for parity pattern
-        checksum = 0
-        for i, digit in enumerate(self.addon):
-            weight = 3 if i % 2 == 0 else 9
-            checksum += int(digit) * weight
-        checksum %= 10
-        parity = _upc.ADDON5_PARITY[checksum]
-
-        code = _upc.ADDON_START
-        for i, digit in enumerate(self.addon):
-            if i > 0:
-                code += _upc.ADDON_SEPARATOR
-            code += _upc.ADDON_CODES[parity[i]][int(digit)]
-        return code
+        return addon_utils.build_addon(self.addon or "")
 
     def to_ascii(self) -> str:
         """Returns an ascii representation of the barcode.
