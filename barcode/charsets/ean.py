@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from barcode.charsets.addons import ADDON2_PARITY
+from barcode.charsets.addons import ADDON5_PARITY
+from barcode.charsets.addons import ADDON_SEPARATOR
+from barcode.charsets.addons import ADDON_START
+
+# Note: Addon codes use CODES["A"] and CODES["B"] defined below
+
 EDGE = "101"
 MIDDLE = "01010"
 CODES = {
@@ -53,29 +60,15 @@ LEFT_PATTERN = (
     "ABBABA",
 )
 
-# EAN-2/EAN-5 Addon patterns (GS1/ISO standard)
-ADDON_START = "1011"  # Start guard for addon
-ADDON_SEPARATOR = "01"  # Separator between addon digits
-
-# EAN-2 parity patterns: determined by value mod 4
-ADDON2_PARITY = (
-    "AA",  # 0
-    "AB",  # 1
-    "BA",  # 2
-    "BB",  # 3
-)
-
-# EAN-5 parity patterns: determined by checksum
-ADDON5_PARITY = (
-    "BBAAA",  # 0
-    "BABAA",  # 1
-    "BAABA",  # 2
-    "BAAAB",  # 3
-    "ABBAA",  # 4
-    "AABBA",  # 5
-    "AAABB",  # 6
-    "ABABA",  # 7
-    "ABAAB",  # 8
-    "AABAB",  # 9
-)
+# Re-export addon constants for backwards compatibility
+__all__ = [
+    "ADDON2_PARITY",
+    "ADDON5_PARITY",
+    "ADDON_SEPARATOR",
+    "ADDON_START",
+    "CODES",
+    "EDGE",
+    "LEFT_PATTERN",
+    "MIDDLE",
+]
 

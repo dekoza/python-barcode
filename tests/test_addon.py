@@ -10,6 +10,7 @@ from barcode.errors import NumberOfDigitsError
 from barcode.isxn import ISBN10
 from barcode.isxn import ISBN13
 from barcode.isxn import ISSN
+from barcode.upc import UPCA
 
 
 class TestEAN2Addon:
@@ -164,4 +165,100 @@ class TestGetBarcodeWithAddon:
         """Test get_barcode with ISSN and addon."""
         issn = get_barcode("issn", "03178471", options={"addon": "05"})
         assert issn.addon == "05"
+
+    def test_get_barcode_upca_with_addon(self) -> None:
+        """Test get_barcode with UPC-A and addon."""
+        upca = get_barcode("upca", "01234567890", options={"addon": "12"})
+        assert upca.addon == "12"
+        assert upca.get_fullcode() == "012345678905 12"
+
+
+class TestUPCAWithAddon:
+    """Tests for UPC-A with EAN-2 and EAN-5 addons."""
+
+    def test_upca_with_addon2(self) -> None:
+        """Test UPC-A with 2-digit addon."""
+        upc = UPCA("01234567890", addon="12")
+        assert upc.upc == "012345678905"
+        assert upc.addon == "12"
+        assert upc.get_fullcode() == "012345678905 12"
+        assert str(upc) == "012345678905 12"
+
+    def test_upca_with_addon5(self) -> None:
+        """Test UPC-A with 5-digit addon."""
+        upc = UPCA("01234567890", addon="52495")
+        assert upc.addon == "52495"
+        assert upc.get_fullcode() == "012345678905 52495"
+        assert str(upc) == "012345678905 52495"
+
+    def test_upca_addon2_builds_correctly(self) -> None:
+        """Test that UPC-A with EAN-2 addon pattern is built correctly."""
+        upc = UPCA("01234567890", addon="12")
+        code = upc.build()[0]
+        # Main barcode should be there
+        assert code.startswith("101")  # Start guard
+        # Addon should be appended
+        assert "1011" in code  # Addon start guard
+
+    def test_upca_addon5_builds_correctly(self) -> None:
+        """Test that UPC-A with EAN-5 addon pattern is built correctly."""
+        upc = UPCA("01234567890", addon="52495")
+        code = upc.build()[0]
+        # Main barcode should be there
+        assert code.startswith("101")  # Start guard
+        # Addon should be appended
+        assert "1011" in code  # Addon start guard
+
+    def test_upca_addon_must_be_digits(self) -> None:
+        """Test that UPC-A addon must contain only digits."""
+        with pytest.raises(IllegalCharacterError):
+            UPCA("01234567890", addon="1A")
+
+    def test_upca_addon_must_be_2_or_5_digits(self) -> None:
+        """Test that UPC-A addon must be exactly 2 or 5 digits."""
+        with pytest.raises(NumberOfDigitsError):
+            UPCA("01234567890", addon="1")
+        with pytest.raises(NumberOfDigitsError):
+            UPCA("01234567890", addon="123")
+        with pytest.raises(NumberOfDigitsError):
+            UPCA("01234567890", addon="1234")
+        with pytest.raises(NumberOfDigitsError):
+            UPCA("01234567890", addon="123456")
+
+    def test_upca_addon_empty_string_ignored(self) -> None:
+        """Test that empty addon string is treated as no addon."""
+        upc = UPCA("01234567890", addon="")
+        assert upc.addon is None
+        assert upc.get_fullcode() == "012345678905"
+
+    def test_upca_addon_whitespace_stripped(self) -> None:
+        """Test that whitespace is stripped from UPC-A addon."""
+        upc = UPCA("01234567890", addon="  12  ")
+        assert upc.addon == "12"
+
+    def test_upca_addon_none_is_valid(self) -> None:
+        """Test that None addon is valid (no addon) for UPC-A."""
+        upc = UPCA("01234567890", addon=None)
+        assert upc.addon is None
+        assert upc.get_fullcode() == "012345678905"
+
+    def test_upca_make_ean_with_addon(self) -> None:
+        """Test UPC-A with make_ean=True and addon."""
+        upc = UPCA("01234567890", make_ean=True, addon="12")
+        assert upc.addon == "12"
+        assert upc.get_fullcode() == "0012345678905 12"
+        assert str(upc) == "0012345678905 12"
+
+    def test_upca_addon2_parity_mod4(self) -> None:
+        """Test UPC-A EAN-2 parity patterns based on value mod 4."""
+        # Test different mod 4 values
+        upc00 = UPCA("01234567890", addon="00")  # 0 % 4 = 0 -> AA
+        upc01 = UPCA("01234567890", addon="01")  # 1 % 4 = 1 -> AB
+        upc02 = UPCA("01234567890", addon="02")  # 2 % 4 = 2 -> BA
+        upc03 = UPCA("01234567890", addon="03")  # 3 % 4 = 3 -> BB
+
+        # Each should build without error
+        for upc in [upc00, upc01, upc02, upc03]:
+            code = upc.build()[0]
+            assert len(code) > 95  # Main UPC-A + addon
 
