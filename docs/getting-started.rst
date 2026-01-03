@@ -135,7 +135,7 @@ any graphical app (e.g.: Firefox).
 Using EAN-2 and EAN-5 Addons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 0.16.3
+.. versionadded:: |version|
 
 EAN-2 and EAN-5 are supplemental barcodes that can be added to EAN-13, EAN-8,
 ISBN, and ISSN barcodes. They are commonly used for:
