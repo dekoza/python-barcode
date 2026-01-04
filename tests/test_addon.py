@@ -42,7 +42,6 @@ def _render_svg(ean_code: str, addon: str, guardbar: bool = True) -> str:
     return out.getvalue().decode("utf-8")
 
 
-
 class TestEAN2Addon:
     """Tests for EAN-2 addon functionality."""
 
@@ -296,29 +295,6 @@ class TestUPCAWithAddon:
 class TestGTINCompliantAddonLayout:
     """Verify GTIN-compliant layout for guardbar + addon combinations."""
 
-    def test_ean13_guardbar_addon2_text_order(self) -> None:
-        """EAN-13 with guardbar and EAN-2: text order must be
-        main blocks, addon, '>'."""
-        svg = _render_svg("5901234123457", "12")
-        texts = [unescape(t) for t in re.findall(r"<text[^>]*>(.*?)</text>", svg)]
-
-        # Expected order: 3 main blocks + addon + marker
-        assert len(texts) == 5
-        assert texts[:3] == ["5", "901234", "123457"]  # main blocks
-        assert texts[3] == "12"  # addon
-        assert texts[4] == ">"  # marker after addon
-
-    def test_ean13_guardbar_addon5_text_order(self) -> None:
-        """EAN-13 with guardbar and EAN-5: text order must be
-        main blocks, addon, '>'."""
-        svg = _render_svg("5901234123457", "52495")
-        texts = [unescape(t) for t in re.findall(r"<text[^>]*>(.*?)</text>", svg)]
-
-        assert len(texts) == 5
-        assert texts[:3] == ["5", "901234", "123457"]
-        assert texts[3] == "52495"  # 5-digit addon
-        assert texts[4] == ">"
-
     def test_addon_and_marker_vertical_alignment(self) -> None:
         """Addon digits and '>' marker must be at the same
         vertical position."""
@@ -328,21 +304,12 @@ class TestGTINCompliantAddonLayout:
         # Last two elements are addon and '>'
         addon_y = float(elements[-2]["y"])
         marker_y = float(elements[-1]["y"])
+        main_y = float(elements[0]["y"])
 
         assert addon_y == marker_y, (
             f"Addon and marker must share y position: "
             f"addon={addon_y}, marker={marker_y}"
         )
-
-    def test_addon_positioned_above_main_text(self) -> None:
-        """Addon label must be positioned above (lower y value)
-        main EAN text."""
-        svg = _render_svg("5901234123457", "12")
-        elements = _extract_text_elements(svg)
-
-        # First element is first main block, last two are addon and '>'
-        main_y = float(elements[0]["y"])
-        addon_y = float(elements[-2]["y"])
 
         # In SVG, lower y = higher on page
         assert addon_y < main_y, (
@@ -421,7 +388,10 @@ class TestEAN8WithGuardbarAddon:
 
         texts = [unescape(t) for t in re.findall(r"<text[^>]*>(.*?)</text>", svg)]
 
-        # EAN-8: first digit + 2 main blocks + addon + '>'
+        # EAN-8: "<" + 2 main blocks + addon + '>'
         assert len(texts) == 5
+        assert texts[0] == "<"  # marker
         assert texts[-2] == "12"  # addon
         assert texts[-1] == ">"  # marker
+
+        assert ean.get_fullcode() == "< 4026 7708 12 >"

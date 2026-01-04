@@ -339,9 +339,9 @@ class BaseWriter:
                 # the standard baseline.
                 addon_code: str | None = None
                 main_blocks = blocks
-                if len(blocks) >= 2 and blocks[-2] == ">":
+                if len(blocks) >= 2 and blocks[-1] == ">":
                     main_blocks = blocks[:-2]
-                    addon_code = blocks[-1]
+                    addon_code = blocks[-2]
 
                 ypos += pt2mm(self.font_size)
 

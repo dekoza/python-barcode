@@ -102,13 +102,10 @@ class EuropeanArticleNumber13(Barcode):
         return self.ean
 
     def get_fullcode(self) -> str:
+        addon = "" if not self.addon else f" {self.addon}"
         if self.guardbar:
-            base = self.ean[0] + " " + self.ean[1:7] + " " + self.ean[7:] + " >"
-        else:
-            base = self.ean
-        if self.addon:
-            return f"{base} {self.addon}"
-        return base
+            return self.ean[0] + " " + self.ean[1:7] + " " + self.ean[7:] + addon + " >"
+        return f"{self.ean}{addon}"
 
     def calculate_checksum(self, value: str | None = None) -> int:
         """Calculates and returns the checksum for EAN13-Code.
@@ -233,13 +230,10 @@ class EuropeanArticleNumber8(EuropeanArticleNumber13):
         return [code]
 
     def get_fullcode(self):
+        addon = "" if not self.addon else f" {self.addon}"
         if self.guardbar:
-            base = "< " + self.ean[:4] + " " + self.ean[4:] + " >"
-        else:
-            base = self.ean
-        if self.addon:
-            return f"{base} {self.addon}"
-        return base
+            return "< " + self.ean[:4] + " " + self.ean[4:] + addon + " >"
+        return f"{self.ean}{addon}"
 
 
 class EuropeanArticleNumber8WithGuard(EuropeanArticleNumber8):
