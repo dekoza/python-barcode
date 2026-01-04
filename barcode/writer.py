@@ -356,7 +356,7 @@ class BaseWriter:
                     # Addon bars start at: bars_ypos + addon_text_space
                     # Text should be in the space BETWEEN bars_ypos and addon bar start
                     # and it doesn't need margin on top (it's already above the bars)
-                    addon_ypos = bars_ypos + addon_text_space -self.margin_top
+                    addon_ypos = bars_ypos + addon_text_space - self.margin_top
 
                     # Center addon text above addon bars
                     if addon_start_x is not None and addon_end_x is not None:
