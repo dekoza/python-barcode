@@ -138,7 +138,7 @@ Using EAN-2 and EAN-5 Addons
 .. versionadded:: |version|
 
 EAN-2 and EAN-5 are supplemental barcodes that can be added to EAN-13, EAN-8,
-ISBN, and ISSN barcodes. They are commonly used for:
+ISBN, ISSN, and UPC-A barcodes. They are commonly used for:
 
 - **EAN-2**: Periodical issue numbers (e.g., magazine week/month)
 - **EAN-5**: Suggested retail prices (e.g., book prices)
