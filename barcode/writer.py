@@ -312,68 +312,76 @@ class BaseWriter:
         ypos += base_height  # Use base_height for text positioning
 
         if self.text and self._callbacks["paint_text"] is not None:
-            if not text["start"]:
-                # If we don't have any start value, print the entire ean
-                ypos += self.text_distance
-                xpos = bxs + (bxe - bxs) / 2.0 if self.center_text else bxs
-                self._callbacks["paint_text"](xpos, ypos)
+            # Parse text blocks and detect addon
+            blocks = self.text.split(" ")
+            has_guard = blocks[-1] == ">"
+            working_blocks = blocks[:-1] if has_guard else blocks
+
+            # Check if last block is addon (2 or 5 digits)
+            addon_code: str | None = None
+            if working_blocks and len(working_blocks[-1]) in (2, 5):
+                addon_code = working_blocks[-1]
+                working_blocks = working_blocks[:-1]
+
+            # Calculate addon text position if addon exists
+            addon_ypos = bars_ypos + addon_text_space - self.margin_top
+            if addon_start_x is not None and addon_end_x is not None:
+                addon_xpos = (addon_start_x + addon_end_x) / 2
             else:
-                # Else, divide the ean into blocks and print each block
-                # in the expected position.
+                addon_xpos = bxe  # Fallback
+
+            if not text["start"]:
+                # No guards - single centered text line
+                ypos += self.text_distance
+
+                if addon_code is not None and addon_start_x is not None:
+                    # Draw main text centered over main barcode (excluding addon)
+                    main_end_x = addon_start_x - 9 * self.module_width
+                    main_text = " ".join(working_blocks)
+                    xpos = bxs + (main_end_x - bxs) / 2.0 if self.center_text else bxs
+                    self.text = main_text
+                    self._callbacks["paint_text"](xpos, ypos)
+
+                    # Draw addon text above addon bars
+                    self.text = addon_code
+                    self._callbacks["paint_text"](addon_xpos, addon_ypos)
+                else:
+                    # No addon - draw full text centered
+                    xpos = bxs + (bxe - bxs) / 2.0 if self.center_text else bxs
+                    self._callbacks["paint_text"](xpos, ypos)
+            else:
+                # Guards present - divide text into positioned blocks
                 text["xpos"] = [bxs - 4 * self.module_width]
 
-                # Calculates the position of the text by getting the difference
-                # between a guard end and the next start
+                # Calculate positions between guard ends and starts
                 text["start"].pop(0)
                 for s, e in zip(text["start"], text["end"]):
                     text["xpos"].append(e + (s - e) / 2)
 
-                # The last text block is always put after the last guard end
+                # Last text block after last guard end
                 text["xpos"].append(text["end"][-1] + 4 * self.module_width)
-
-                # Split the ean into its blocks
-                blocks = self.text.split(" ")
-
-                # If the barcode also contains an addon, place the addon label above
-                # the addon bars (per GS1 layout), while keeping the main EAN text at
-                # the standard baseline.
-                addon_code: str | None = None
-                main_blocks = blocks
-                if len(blocks) >= 2 and blocks[-1] == ">":
-                    main_blocks = blocks[:-2]
-                    addon_code = blocks[-2]
 
                 ypos += pt2mm(self.font_size)
 
-                # Draw the main EAN blocks on the baseline.
-                for text_, xpos in zip(main_blocks, text["xpos"]):
+                # Draw main EAN blocks on the baseline
+                for text_, xpos in zip(working_blocks, text["xpos"]):
                     self.text = text_
                     self._callbacks["paint_text"](xpos, ypos)
 
-                # Draw the addon label above the addon bars.
-                # The addon digits are placed first, then the '>' marker follows them.
+                # Draw addon and/or guard marker if present
                 if addon_code is not None:
-                    # Addon bars start at: bars_ypos + addon_text_space
-                    # Text should be in the space BETWEEN bars_ypos and addon bar start
-                    # and it doesn't need margin on top (it's already above the bars)
-                    addon_ypos = bars_ypos + addon_text_space - self.margin_top
-
-                    # Center addon text above addon bars
-                    if addon_start_x is not None and addon_end_x is not None:
-                        addon_xpos = (addon_start_x + addon_end_x) / 2
-                    else:
-                        # Fallback if addon bars not tracked
-                        addon_xpos = text["xpos"][-1]
-
-                    # Draw addon digits
                     self.text = addon_code
                     self._callbacks["paint_text"](addon_xpos, addon_ypos)
 
-                    # Draw '>' marker after the last addon bar slightly after
-                    # the end of bars
+                    # Draw '>' marker after the last addon bar
                     marker_xpos = bxe + 2 * self.module_width
                     self.text = ">"
                     self._callbacks["paint_text"](marker_xpos, addon_ypos)
+                elif has_guard:
+                    # No addon, but guard present - draw '>' on main baseline
+                    marker_xpos = bxe + 2 * self.module_width
+                    self.text = ">"
+                    self._callbacks["paint_text"](marker_xpos, ypos)
 
         return self._callbacks["finish"]()
 
