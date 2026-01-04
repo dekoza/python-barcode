@@ -73,4 +73,3 @@ __all__ = [
     "LEFT_PATTERN",
     "MIDDLE",
 ]
-

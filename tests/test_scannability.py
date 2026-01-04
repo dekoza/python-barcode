@@ -13,10 +13,13 @@ System requirements:
     - libcairo2: Cairo library (apt install libcairo2-dev)
 """
 
+# mypy: ignore-errors
+
 from __future__ import annotations
 
 import io
 from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
 
@@ -29,18 +32,21 @@ try:
 
     HAS_PIL = True
 except ImportError:
+    Image = None  # type: ignore[assignment]
     HAS_PIL = False
 
 try:
-    import pyzbar.pyzbar as pyzbar
+    import pyzbar.pyzbar as _pyzbar  # type: ignore[import-untyped]
 
+    pyzbar: Any = _pyzbar
     HAS_PYZBAR = True
 except ImportError:
     HAS_PYZBAR = False
 
 try:
-    import cairosvg
+    import cairosvg as _cairosvg  # type: ignore[import-untyped]
 
+    cairosvg: Any = _cairosvg
     HAS_CAIROSVG = True
 except ImportError:
     HAS_CAIROSVG = False
@@ -59,12 +65,19 @@ pytestmark = [
 
 def decode_barcode(image: PILImage) -> list[str]:
     """Decode barcodes from an image and return list of decoded values."""
+    if not HAS_PYZBAR:
+        raise RuntimeError("pyzbar not installed")
     decoded = pyzbar.decode(image)
     return [d.data.decode("utf-8") for d in decoded]
 
 
 def svg_to_image(svg_data: bytes, scale: float = 3.0) -> PILImage:
     """Convert SVG data to PIL Image."""
+    if not HAS_CAIROSVG:
+        raise RuntimeError("cairosvg not installed")
+    if not HAS_PIL or Image is None:
+        raise RuntimeError("Pillow not installed")
+    assert Image is not None
     png_data = cairosvg.svg2png(bytestring=svg_data, scale=scale)
     return Image.open(io.BytesIO(png_data))
 
@@ -87,6 +100,9 @@ def generate_image_barcode(
     **kwargs,
 ) -> PILImage:
     """Generate a barcode image and return as PIL Image."""
+    if not HAS_PIL or Image is None:
+        raise RuntimeError("Pillow not installed")
+
     bc = barcode.get(barcode_type, code, writer=ImageWriter(), options=kwargs)
     buffer = io.BytesIO()
     bc.write(buffer)
@@ -349,4 +365,3 @@ class TestCode39Scannability:
         # Code39 may have checksum character appended
         decoded_matches = [d for d in decoded if d.startswith(code)]
         assert decoded_matches, f"Expected value starting with {code}, got {decoded}"
-

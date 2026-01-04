@@ -13,6 +13,9 @@ current
   main barcode and the addon, as required by the GS1 specification. This ensures
   proper scanning of barcodes with addons.
 * Added scannability tests for EAN-2 and EAN-5 addons using the ``pyzbar`` library.
+* Adjusted rendering of EAN barcodes when using ``guardbar=True`` together with an
+  EAN-2/EAN-5 ``addon``: the addon label is placed above the addon bars per
+  GS1 layout, rather than being mixed into the main text line.
 * Fixed ISSN to accept full EAN-13 format (13 digits starting with 977) and
   preserve digits 11-12 (sequence variant) instead of always replacing them
   with "00".

@@ -61,4 +61,3 @@ ADDON5_PARITY = (
     "ABAAB",  # 8
     "AABAB",  # 9
 )
-

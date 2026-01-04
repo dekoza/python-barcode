@@ -40,7 +40,7 @@ def build_addon2(addon: str) -> str:
     Parity is determined by the 2-digit value mod 4.
 
     :param addon: The 2-digit addon string
-    :returns: The EAN-2 addon pattern
+    :returns: The EAN-2 addon pattern (using 'A' for addon bars)
     """
     value = int(addon)
     parity = ADDON2_PARITY[value % 4]
@@ -50,7 +50,9 @@ def build_addon2(addon: str) -> str:
         if i > 0:
             code += ADDON_SEPARATOR
         code += ADDON_CODES[parity[i]][int(digit)]
-    return code
+
+    # Replace '1' with 'A' to mark addon bars for special rendering
+    return code.replace("1", "A")
 
 
 def build_addon5(addon: str) -> str:
@@ -59,7 +61,7 @@ def build_addon5(addon: str) -> str:
     Parity is determined by a checksum calculation.
 
     :param addon: The 5-digit addon string
-    :returns: The EAN-5 addon pattern
+    :returns: The EAN-5 addon pattern (using 'A' for addon bars)
     """
     # Calculate checksum for parity pattern
     checksum = 0
@@ -74,5 +76,6 @@ def build_addon5(addon: str) -> str:
         if i > 0:
             code += ADDON_SEPARATOR
         code += ADDON_CODES[parity[i]][int(digit)]
-    return code
 
+    # Replace '1' with 'A' to mark addon bars for special rendering
+    return code.replace("1", "A")
